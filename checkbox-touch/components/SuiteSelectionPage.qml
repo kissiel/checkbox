@@ -34,6 +34,24 @@ Page {
 
     visible: false
 
+    head {
+            actions: [
+                Action {
+                    iconName: "select"
+                    text: i18n.tr("Select All")
+                    onTriggered: {
+                        console.log("Select all triggered")
+                    }
+                },
+                Action {
+                    iconName: "media-playback-start"
+                    text: i18n.tr("Start")
+                    onTriggered: {
+                        console.log("Start triggered")
+                    }
+                }
+            ]
+        }
     ListView {
         spacing: 8
         anchors.fill: parent
