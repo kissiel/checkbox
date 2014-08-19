@@ -22,33 +22,51 @@
 
 import QtQuick 2.0
 import Ubuntu.Components 1.1
+import Ubuntu.Components.ListItems 0.1 as ListItem
 
 Page {
-    id: welcomePage
+    id: suiteSelectionPage
 
-    signal startTestingTriggered();
-    property alias welcomeText: welcomeText.text
+    property var checkBoxStack
+    signal selectionChanged(int index, bool checked)
 
-    title: i18n.tr("System Testing")
+    title: i18n.tr("Suite Selection")
+
     visible: false
 
-    Label {
-        id: welcomeText
+    ListView {
+        spacing: 8
+        anchors.fill: parent
+        anchors.margins: units.gu(2)
 
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            bottom: startTestButton.top
-        }
+        model: 15 //TODO: replace with list querried from plainbox
 
-        text: i18n.tr("Welcome text")
-        font.pixelSize: units.gu(4)
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+        delegate: categorySelection
+
     }
+    Component {
+        id: categorySelection
+        Item {
+            width: parent.width
 
+            height: units.gu(4)
+            Text {
+                font.pixelSize: units.gu(3)
+                text: "Category " + index
+            }
+            CheckBox {
+                id: checkbox
+                anchors.right: parent.right
+                onClicked:{
+                    selectionChanged(index, checkbox.checked)
+                }
+            }
+
+        }
+    }
+    onSelectionChanged:{
+        console.log("Selection changed. Item " + index + " is now" + (checked? " checked": " unchecked") + ".")
+    }
     Button {
         id: startTestButton
 
@@ -61,10 +79,7 @@ Page {
 
         color: UbuntuColors.green
         text: i18n.tr("Start Testing")
-        onClicked: startTestingTriggered();
-    }
-    onStartTestingTriggered: {
-        main.startTestingTriggered();
+        onClicked: main.suiteSelectionDone();
     }
 
 }

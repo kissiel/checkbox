@@ -29,6 +29,7 @@ import "components"
 */
 
 MainView {
+    id: main
     // objectName for functional testing purposes (autopilot-qt5)
     objectName: "mainView"
 
@@ -46,8 +47,12 @@ MainView {
 
     useDeprecatedToolbar: false
 
+    signal startTestingTriggered();
+    signal suiteSelectionDone();
+
     // High-level object representing the full checkbox testing stack
     CheckboxStack {
+        id: checkBoxStack
         onStackReady: {
             console.log("Pyotherside version" + pyothersideVersion);
             console.log("Python version " + pythonVersion);
@@ -63,4 +68,13 @@ MainView {
             })
         }
     }
+    onStartTestingTriggered: {
+        pageStack.push(Qt.resolvedUrl("components/SuiteSelectionPage.qml"), {
+            "checkBoxStack": checkBoxStack
+        })
+    }
+    onSuiteSelectionDone: {
+        console.log("Categories selected")
+    }
+
 }
