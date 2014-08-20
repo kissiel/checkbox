@@ -26,10 +26,8 @@ import Ubuntu.Components 1.1
 Page {
     id: automatedTestPage
 
-    property var testName
-    property var testDescription
-    signal startActivity();
-    signal stopActivity();
+    property alias testName: testNameLabel.text
+    property alias testDescription: testDescrptionLabel.text
 
     title: i18n.tr("Automated test")
 
@@ -44,7 +42,6 @@ Page {
             right: parent.right
         }
 
-        text: testName
         font.pixelSize: units.gu(4)
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignLeft
@@ -78,10 +75,10 @@ Page {
             margins: units.gu(2)
         }
     }
-    onStartActivity: {
+    function startActivity() {
         activity.running = true;
     }
-    onStopActivity: {
+    function stopActivity() {
         activity.running = false;
     }
     Component.onCompleted: {
