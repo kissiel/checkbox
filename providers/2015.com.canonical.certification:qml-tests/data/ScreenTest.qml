@@ -1,21 +1,79 @@
+/*
+ * This file is part of Checkbox.
+ *
+ * Copyright 2015 Canonical Ltd.
+ * Written by:
+ *   Maciej Kisielewski <maciej.kisielewski@canonical.com>
+ *
+ * Checkbox is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3,
+ * as published by the Free Software Foundation.
+ *
+ * Checkbox is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Checkbox.  If not, see <http://www.gnu.org/licenses/>.
+ */
 import QtQuick 2.0
 import Ubuntu.Components 1.1
 import QtQuick.Window 2.0
 
+/*! \brief Generic Screen Test.
+    \inherits Page
+
+    This widget is a page drawing fields that user should click in order to
+    satisfy test requiremets. Fields that have to be clicked appear in the same
+    order as they were added using add* methods. The first field will appear
+    once the runTest method is called.
+*/
+
 Page {
-    anchors.fill: parent
     id: screenTest
 
-    signal fieldClicked(var row, var col);
+    anchors.fill: parent
+
+    /*!
+        Gets triggered when the last of queued targets receives fieldClicked.
+     */
     signal allTargetsHit;
+
+    /*!
+        Gets triggered when user clicks or taps the screen three times in a
+        quick succession (maximum of 400ms between taps/clicks).
+        This signal might be used to display a menu of advanced test options.
+     */
     signal tripleClicked;
 
+    /*!
+        Gets triggered when any of the fields (visible or not) are
+        tapped/clicked/dragged onto.
+        By default this signal is used by internal logic of the whole test.
+        Connect to this signala if you need fine control over the test.
+     */
+    signal fieldClicked(var row, var col);
+
+    /*!
+        resolution sets the number of rows that the grid of fields should have.
+        Number of columns is set automatically to produce fields of the shape
+        as close to square as possible.
+     */
     property var resolution: 20
 
-
+    /*!
+        call addTarget to add a new target to the queue of to-be-clicked
+        fields. The argument should contain `x` and `y` members that represent
+        coordinates in the grid.
+     */
     function addTarget(target) {
         _targets.push(target);
     }
+
+    /*!
+        addRandomTargets adds `count` of targets with random coordinates
+     */
     function addRandomTargets(count) {
         for (var i = 0; i < count; i++) {
             var randomField = {
@@ -25,7 +83,11 @@ Page {
         }
     }
 
-
+    /*!
+        Call addEdge to add set of targets that consitute the edge of the
+        screen. `edgeName` is the string specifying which edge should be added.
+        This might be one of the following: 'top', 'bottom', 'right', 'left'.
+     */
     function addEdge(edgeName) {
         switch(edgeName) {
         case "top":
@@ -43,6 +105,11 @@ Page {
         }
     }
 
+    /*!
+        Call runTest() to start processing test fields.
+        Testing procedure normally ends with `onAllTargetsHit` signal being
+        triggered.
+     */
     function runTest() {
         var currentTarget = _targets.shift();
         var col = currentTarget.x;
