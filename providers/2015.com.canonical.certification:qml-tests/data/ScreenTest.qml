@@ -91,16 +91,20 @@ Page {
     function addEdge(edgeName) {
         switch(edgeName) {
         case "top":
-            for(var i = 0; i < _grid.cols; i++) addTarget({"x": i, "y": 0});
+            for(var i = 0; i < _grid.cols; i++)
+                addTarget({"x": i, "y": 0});
             break;
         case "bottom":
-            for(var i = 0; i < _grid.cols; i++) addTarget({"x": i, "y": _grid.rows-1});
+            for(var i = 0; i < _grid.cols; i++)
+                addTarget({"x": i, "y": _grid.rows-1});
             break;
         case "left":
-            for(var i = 0; i < _grid.rows; i++) addTarget({"x": 0, "y": i});
+            for(var i = 0; i < _grid.rows; i++)
+                addTarget({"x": 0, "y": i});
             break;
         case"right":
-            for(var i = 0; i < _grid.rows; i++) addTarget({"x": _grid.cols-1, "y": i});
+            for(var i = 0; i < _grid.rows; i++)
+                addTarget({"x": _grid.cols-1, "y": i});
             break;
         }
     }
@@ -115,9 +119,11 @@ Page {
         var col = currentTarget.x;
         var row = currentTarget.y;
 
-        //create component
-        var fieldComponentName = "touchField-" + row.toString() + "x" + col.toString();
-        var currentField = Qt.createQmlObject(_touchFieldDefinition, screenTest, fieldComponentName);
+        // create component
+        var fieldComponentName = "touchField-" + row.toString() +
+                                 "x" + col.toString();
+        var currentField = Qt.createQmlObject(
+            _touchFieldDefinition, screenTest, fieldComponentName);
         currentField.width = _grid.fieldWidth;
         currentField.height = _grid.fieldHeight;
         currentField.x = _grid.fieldWidth*col;
@@ -127,7 +133,8 @@ Page {
 
         fieldClicked.connect(function(row, col) {
             if(row === currentTarget.y && col === currentTarget.x) {
-                //disconnect self, so we don't activate ALL next fields while touching the current one
+                // disconnect self, so we don't activate ALL next fields while
+                // touching the current one
                 fieldClicked.disconnect(arguments.callee);
                 _grid[row][col].component.color = "grey";
                 if(_targets.length === 0) {
@@ -154,6 +161,8 @@ Page {
         }
 
         onPressed: {
+            // signalling touchUpdated makes clicking with mouse without moving
+            // the cursor work as expected
             touchUpdated(touchPoints)
             if (!tripleClickTimeout.running) tripleClickTimeout.start();
             tripleClickTimeout.restart();
@@ -176,6 +185,8 @@ Page {
     }
 
     function _createGrid(resolution) {
+        // initiate the grid of fields
+        // NOTE: components creation is deferred until they are needed
         var _grid = {};
         _grid.cols = Math.round(resolution*(width/height));
         _grid.rows = resolution;
@@ -195,12 +206,12 @@ Page {
             var row = Math.floor(y / _grid.fieldHeight);
             fieldClicked(row, col)
         }
-
         return _grid;
     }
 
     property var _grid
     property var _targets: [];
+    // string used for dynamic creation of fields
     property var _touchFieldDefinition: "
     import QtQuick 2.0
         Rectangle {
