@@ -88,6 +88,7 @@ MainView {
             appSettings["testplan"] = "2015.com.canonical.certification::checkbox-touch-autopilot";
             appSettings["providersDir"] = "tests/autopilot/autopilot-provider";
             appSettings["log-level"] = "warning";
+            appSettings["autopilot-mode"] = true;
         } else {
             // normal execution - load settings.json file
             var xhr = new XMLHttpRequest;
@@ -267,14 +268,14 @@ MainView {
 
     ResumeSessionPage {
         id: resumeSessionPage
-        onRerunLast: app.resumeSession(true, appSettings["providersDir"], processNextTest)
-        onContinueSession: app.resumeSession(false, appSettings["providersDir"], processNextTest)
+        onRerunLast: app.resumeSession(true, appSettings["providersDir"], appSettings["autopilot-mode"], processNextTest)
+        onContinueSession: app.resumeSession(false, appSettings["providersDir"], appSettings["autopilot-mode"], processNextTest)
         resumeText: i18n.tr("Checkbox did not finish completely.\nDo you want \
  to rerun last test, continue to the next test, or restart from the beginning?")
         onRestartSession: {
             pageStack.clear();
             pageStack.push(welcomePage);
-            app.startSession(appSettings["providersDir"]);
+            app.startSession(appSettings["providersDir"], appSettings["autopilot-mode"]);
         }
     }
 
@@ -375,10 +376,10 @@ MainView {
             } else {
                 if (result.errors_encountered) {
                     ErrorLogic.showError(mainView, i18n.tr("Could not resume session."),
-                                         app.startSession(appSettings["providersDir"]),
+                                         app.startSession(appSettings["providersDir"], appSettings["autopilot-mode"]),
                                          i18n.tr("Start new session"));
                 } else {
-                    app.startSession(appSettings["providersDir"]);
+                    app.startSession(appSettings["providersDir"], appSettings["autopilot-mode"]);
                 }
             }
         });
@@ -457,7 +458,7 @@ MainView {
             resultsPage.endTesting.connect(function() {
                 pageStack.clear();
                 app.clearSession(function() {
-                    app.startSession(appSettings["providersDir"]);
+                    app.startSession(appSettings["providersDir"], appSettings["autopilot-mode"]);
                     pageStack.push(welcomePage);
                 });
             });

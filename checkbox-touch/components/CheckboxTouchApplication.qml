@@ -45,16 +45,16 @@ PythonObjectRef {
     // Starts session in plainbox and runs all necessary setup actions.
     // Calling this function will signal sessionReady() once it's finished
     // doing setup.
-    function startSession(providersDir) {
-        request("start_session", [providersDir], function(result) {
+    function startSession(providersDir, defaultProviders) {
+        request("start_session", [providersDir, defaultProviders], function(result) {
             sessionDir = result['session_dir'];
             sessionReady();
         }, function(error) {
             console.error("Unable to start session: " + error);
         });
     }
-    function resumeSession(rerunLastTest, providersDir, continuation) {
-        request("resume_session", [rerunLastTest, providersDir], function(result) {
+    function resumeSession(rerunLastTest, providersDir, defaultProviders, continuation) {
+        request("resume_session", [rerunLastTest, providersDir, defaultProviders], function(result) {
             if (!result["session_id"]) {
                 pageStack.pop();
                 ErrorLogic.showError(mainView,

@@ -183,7 +183,7 @@ class CheckboxTouchApplication(PlainboxApplication):
         }
 
     @view
-    def start_session(self, providers_dir):
+    def start_session(self, providers_dir, default_providers):
         if self.manager is not None:
             _logger.warning("start_session() should not be called twice!")
         else:
@@ -192,7 +192,8 @@ class CheckboxTouchApplication(PlainboxApplication):
             self.manager.add_local_device_context()
             self.context = self.manager.default_device_context
             # Add some all providers into the context
-            for provider in self._get_default_providers(providers_dir):
+            for provider in self._get_default_providers(providers_dir,
+                                                        default_providers):
                 self.context.add_provider(provider)
             # Fill in the meta-data
             self.context.state.metadata.app_id = 'checkbox-touch'
@@ -228,10 +229,11 @@ class CheckboxTouchApplication(PlainboxApplication):
         }
 
     @view
-    def resume_session(self, rerun_last_test, providers_dir):
+    def resume_session(self, rerun_last_test, providers_dir,
+                       default_providers):
         all_units = list(itertools.chain(
             *[p.unit_list for p in self._get_default_providers(
-                providers_dir)]))
+                providers_dir, default_providers)]))
         try:
             self.manager = SessionManager.load_session(
                 all_units, self.resume_candidate_storage)
@@ -619,16 +621,21 @@ class CheckboxTouchApplication(PlainboxApplication):
         self.session_storage_repo = SessionStorageRepository(
             self._get_app_cache_directory())
 
-    def _get_default_providers(self, providers_dir):
+    def _get_default_providers(self, providers_dir, default_providers):
         """
         Get providers
 
         :param providers_dir:
             Path within application tree from which to load providers
+        :param default_providers:
+            Load default plainbox providers alongside the ones found in
+            providers_dir.
         :returns:
             list of loaded providers
         """
-        provider_list = get_providers()
+        provider_list = []
+        if default_providers:
+            provider_list = get_providers()
         # when running on ubuntu-touch device, APP_DIR env var is present
         # and points to touch application top directory
         app_root_dir = os.path.normpath(os.getenv(
