@@ -402,20 +402,15 @@ class CheckboxTouchApplication(PlainboxApplication):
         """
         _logger.info("Storing test result: %s", test)
         job_id = test['id']
-        job = self.context.state.job_state_map[job_id].job
+        job = self.assistant.get_job(job_id)
         builder_kwargs = {
             'outcome': test['outcome'],
-            'comments': test.get('comments', pod.UNSET)
+            'comments': test.get('comments', pod.UNSET),
+            'io_log_filename': test['result'].io_log_filename,
+            'execution_duration': time.time() - test['start_time']
         }
-        # some result may already have been saved if the job had some activity
-        # to run, i.e. result object is available in the test object
-        try:
-            builder_kwargs['io_log_filename'] = test['result'].io_log_filename
-        except KeyError:
-            builder_kwargs['execution_duration'] = (
-                time.time() - test['start_time'])
         result = JobResultBuilder(**builder_kwargs).get_result()
-        self.context.state.update_job_result(job, result)
+        self.assistant.use_job_result(job_id, result)
         self.index += 1
         self._checkpoint()
 
