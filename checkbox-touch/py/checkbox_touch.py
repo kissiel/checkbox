@@ -175,47 +175,13 @@ class CheckboxTouchApplication(PlainboxApplication):
 
     @view
     def start_session(self, providers_dir):
-        if self.manager is not None:
-            _logger.warning("start_session() should not be called twice!")
-        else:
-            self._init_session_storage_repo()
-            self.manager = SessionManager.create(self.session_storage_repo)
-            self.manager.add_local_device_context()
-            self.context = self.manager.default_device_context
-            # Add some all providers into the context
-            for provider in self._get_default_providers(providers_dir):
-                self.context.add_provider(provider)
-            # Fill in the meta-data
-            self.context.state.metadata.app_id = 'checkbox-touch'
-            self.context.state.metadata.title = 'Checkbox Touch Session'
-            self.context.state.metadata.flags.add('bootstrapping')
-            # Checkpoint the session so that we have something to see
-            self._checkpoint()
-
-            # Prepare custom execution controller list
-            from plainbox.impl.ctrl import UserJobExecutionController
-            from sudo_with_pass_ctrl import \
-                RootViaSudoWithPassExecutionController
-            controllers = [
-                RootViaSudoWithPassExecutionController(
-                    self.context.provider_list, self._password_provider),
-                UserJobExecutionController(self.context.provider_list),
-            ]
-            self.runner = JobRunner(
-                self.manager.storage.location,
-                self.context.provider_list,
-                # TODO: tie this with well-known-dirs helper
-                os.path.join(self.manager.storage.location, 'io-logs'),
-                execution_ctrl_list=controllers)
-        app_cache_dir = self._get_app_cache_directory()
-        if not os.path.exists(app_cache_dir):
-            os.makedirs(app_cache_dir)
-        with open(os.path.join(app_cache_dir, 'session_id'),
-                  'w') as f:
-            f.write(self.manager.storage.id)
+        self.assistant.use_alternate_repository(
+            self._get_app_cache_directory())
+        self.assistant.select_providers('*')
+        self.assistant.start_new_session('Checkbox Converged session')
         return {
-            'session_id': self.manager.storage.id,
-            'session_dir': self.manager.storage.location
+            'session_id': self.assistant.get_session_id(),
+            'session_dir': self.assistant.get_session_dir()
         }
 
     @view
