@@ -621,7 +621,6 @@ class SessionAssistant:
             public api stability promise. Refer to the documentation of the
             JobState class for details.
         """
-        UsageExpectation.of(self).enforce(back=2)  # 2 is due to @raises
         # XXX: job_state_map is a bit low level, can we avoid that?
         return self._context.state.job_state_map[job_id]
 
