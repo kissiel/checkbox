@@ -282,9 +282,9 @@ class CheckboxTouchApplication(PlainboxApplication):
 
     @view
     def remember_testplan(self, test_plan_id):
-        self.context.invalidate_shared('potential_job_list')
-        self.context.invalidate_shared('potential_category_map')
-        self._init_test_plan_id(test_plan_id)
+        self.assistant.select_test_plan(test_plan_id)
+        self.assistant.bootstrap()
+        return
 
     @view
     def get_categories(self):
