@@ -31,7 +31,6 @@ sys.path = [item for item in sys.path if not item.startswith('/usr/local')]
 
 import abc
 import collections
-import datetime
 import itertools
 import json
 import logging
@@ -158,7 +157,6 @@ class CheckboxTouchApplication(PlainboxApplication):
         self.ui = CheckboxTouchUI()
         self.index = 0
         self._password = None
-        self.timestamp = datetime.datetime.utcnow().isoformat()
         self.resume_candidate_storage = None
 
     def __repr__(self):
@@ -224,7 +222,6 @@ class CheckboxTouchApplication(PlainboxApplication):
         self.context = None
         self.runner = None
         self.index = 0
-        self.timestamp = datetime.datetime.utcnow().isoformat()
         self.desired_category_ids = frozenset()
         self.desired_test_ids = frozenset()
         self.resume_candidate_storage = None
