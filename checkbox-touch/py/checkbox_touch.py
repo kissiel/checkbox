@@ -158,6 +158,8 @@ class CheckboxTouchApplication(PlainboxApplication):
         self.index = 0
         self._password = None
         self.resume_candidate_storage = None
+        self.assistant.use_alternate_repository(
+            self._get_app_cache_directory())
 
     def __repr__(self):
         return "app"
@@ -173,8 +175,6 @@ class CheckboxTouchApplication(PlainboxApplication):
 
     @view
     def start_session(self, providers_dir):
-        self.assistant.use_alternate_repository(
-            self._get_app_cache_directory())
         self.assistant.select_providers('*')
         self.assistant.start_new_session('Checkbox Converged session')
         return {
