@@ -31,6 +31,7 @@ sys.path = [item for item in sys.path if not item.startswith('/usr/local')]
 
 import abc
 import collections
+import datetime
 import itertools
 import json
 import logging
@@ -157,6 +158,7 @@ class CheckboxTouchApplication(PlainboxApplication):
         self.ui = CheckboxTouchUI()
         self.index = 0
         self._password = None
+        self._timestamp = None
         self.resume_candidate_storage = None
         self.assistant.use_alternate_repository(
             self._get_app_cache_directory())
@@ -177,6 +179,7 @@ class CheckboxTouchApplication(PlainboxApplication):
     def start_session(self, providers_dir):
         self.assistant.select_providers('*')
         self.assistant.start_new_session('Checkbox Converged session')
+        self._timestamp = datetime.datetime.utcnow().isoformat()
         return {
             'session_id': self.assistant.get_session_id(),
             'session_dir': self.assistant.get_session_dir()
@@ -497,6 +500,7 @@ class CheckboxTouchApplication(PlainboxApplication):
                 'version': 1,
                 'test_plan_id': self.test_plan_id,
                 'index_in_run_list': self.index,
+                'session_timestamp': self._timestamp,
             }).encode("UTF-8")
 
     def _init_test_plan_id(self, test_plan_id):
