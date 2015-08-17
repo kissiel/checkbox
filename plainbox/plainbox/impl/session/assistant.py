@@ -399,6 +399,17 @@ class SessionAssistant:
                              "session: %s", str(exc))
         return self._resume_candidates
 
+    def update_app_blob(self, app_blob: bytes) -> None:
+        """
+        Update custom app data and save the session in the session storage.
+
+        :param app_blob:
+            Bytes sequence containing JSON-ised app_blob object.
+
+        """
+        self._context.state.metadata.app_blob = app_blob
+        self._manager.checkpoint()
+
     @morris.signal
     def session_available(self, session_id):
         """
