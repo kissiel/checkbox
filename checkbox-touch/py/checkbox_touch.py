@@ -417,6 +417,7 @@ class CheckboxTouchApplication(PlainboxApplication):
         result = JobResultBuilder(**builder_kwargs).get_result()
         self.assistant.use_job_result(job_id, result)
         self.index += 1
+        self.assistant.update_app_blob(self._get_app_blob())
 
     @view
     def run_test_activity(self, test):
