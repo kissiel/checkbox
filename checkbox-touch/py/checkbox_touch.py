@@ -159,6 +159,7 @@ class CheckboxTouchApplication(PlainboxApplication):
         self.index = 0
         self._password = None
         self._timestamp = None
+        self._latest_session = None
         self.resume_candidate_storage = None
         self.assistant.use_alternate_repository(
             self._get_app_cache_directory())
@@ -237,35 +238,24 @@ class CheckboxTouchApplication(PlainboxApplication):
         Checks whether given session is resumable
         """
         resumable = False
-        try:
-            with open(os.path.join(self._get_app_cache_directory(),
-                      'session_id')) as f:
-                session_id = f.readline().rstrip('\n')
-        except (OSError, IOError):
-            session_id = None
-        self._init_session_storage_repo()
-        for storage in self.session_storage_repo.get_storage_list():
-            data = storage.load_checkpoint()
-            if len(data) == 0:
+        session_times = {}
+        resumable_sessions = self.assistant.get_resumable_sessions()
+        for session_id, session_info in resumable_sessions.items():
+            if session_info.metadata.app_blob is None:
                 continue
-            try:
-                metadata = SessionPeekHelper().peek(data)
-                if (metadata.app_id == 'checkbox-touch'
-                        and storage.id == session_id
-                        and SessionMetaData.FLAG_INCOMPLETE in
-                        metadata.flags):
-                    self.resume_candidate_storage = storage
-                    resumable = True
-            except SessionResumeError as exc:
-                _logger.info("Exception raised when trying to resume"
-                             "session: %s", str(exc))
-                return {
-                    'resumable': False,
-                    'errors_encountered': True
-                }
+            app_blob = json.loads(
+                session_info.metadata.app_blob.decode('UTF-8'))
+            session_times[session_id] = app_blob['session_timestamp']
+        if len(session_times) == 0:
+            return {
+                'resumable': False,
+                'error_encountered': False,
+            }
+        candidate_id = sorted(session_times, key=session_times.get)[-1]
+        self._latest_session = candidate_id
         return {
-            'resumable': resumable,
-            'errors_encountered': False
+            'resumable': True,
+            'error_encountered': False,
         }
 
     @view
