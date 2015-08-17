@@ -282,6 +282,7 @@ class CheckboxTouchApplication(PlainboxApplication):
 
     @view
     def remember_testplan(self, test_plan_id):
+        self.test_plan_id = test_plan_id
         self.assistant.select_test_plan(test_plan_id)
         self.assistant.bootstrap()
         return
