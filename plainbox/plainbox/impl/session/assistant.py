@@ -365,6 +365,26 @@ class SessionAssistant:
             self.select_test_plan: "select the test plan to execute"
         }
 
+    @raises(KeyError, UnexpectedMethodCall)
+    def resume_session(self, session_id: str) -> 'SessionMetaData':
+        all_units = list(itertools.chain(
+            *[p.unit_list for p in self._selected_providers]))
+        self._manager = SessionManager.load_session(
+            all_units, self._resume_candidates[session_id].storage)
+        self._context = self._manager.add_local_device_context()
+        self._runner = JobRunner(
+            self._manager.storage.location,
+            self._context.provider_list,
+            jobs_io_log_dir=os.path.join(
+                self._manager.storage.location, 'io-logs'),
+            command_io_delegate=self._command_io_delegate,
+            execution_ctrl_list=self._execution_ctrl_list)
+        self.session_available(self._manager.storage.id)
+        _logger.debug("Session resumed: %s", session_id)
+        UsageExpectation.of(self).allowed_calls = (
+            self._get_allowed_calls_in_normal_state())
+        return self._resume_candidates[session_id].metadata
+
     def get_resumable_sessions(self) -> dict:
         """
         Check repository for sessions that could be resumed.
