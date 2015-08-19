@@ -178,7 +178,9 @@ class CheckboxTouchApplication(PlainboxApplication):
 
     @view
     def start_session(self, providers_dir):
-        self.assistant.select_providers('*')
+        self.assistant.select_providers(
+            '*',
+            additional_providers=self._get_embedded_providers(providers_dir))
         self.assistant.start_new_session('Checkbox Converged session')
         self._timestamp = datetime.datetime.utcnow().isoformat()
         return {
