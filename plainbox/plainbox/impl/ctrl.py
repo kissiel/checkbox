@@ -545,17 +545,36 @@ class CheckBoxExecutionController(IExecutionController):
         with self.configured_filesystem(job, config) as nest_dir:
             # Get the command and the environment.
             # of this execution controller
+            if job.pre_command:
+                pre_cmd = self.get_execution_command(
+                    job.pre_command, job, job_state, config, session_dir,
+                    nest_dir)
+            else:
+                pre_cmd = None
             cmd = self.get_execution_command(
-                job, job_state, config, session_dir, nest_dir)
+                job.command, job, job_state, config, session_dir, nest_dir)
+            if job.post_command:
+                post_cmd = self.get_execution_command(
+                    job.post_command, job, job_state, config, session_dir,
+                    nest_dir)
+            else:
+                post_cmd = None
             env = self.get_execution_environment(
                 job, job_state, config, session_dir, nest_dir)
-            with self.temporary_cwd(job, config) as cwd_dir:
+            with self.temporary_cwd(job, config) as cwd:
                 # run the command
                 logger.debug(_("job[%s] executing %r with env %r in cwd %r"),
-                             job.id, cmd, env, cwd_dir)
-                return_code = extcmd_popen.call(cmd, env=env, cwd=cwd_dir)
+                             job.id, cmd, env, cwd)
+                if pre_cmd:
+                    return_code = extcmd_popen.call(pre_cmd, env=env, cwd=cwd)
+                    # Short-circuit abort if the pre command fails
+                    if return_code:
+                        return return_code
+                return_code = extcmd_popen.call(cmd, env=env, cwd=cwd)
                 if 'noreturn' in job.get_flag_set():
                     self._halt()
+                if post_cmd:
+                    extcmd_popen.call(post_cmd, env=env, cwd=cwd)
                 return return_code
 
     @contextlib.contextmanager
@@ -685,11 +704,14 @@ class CheckBoxExecutionController(IExecutionController):
         """
 
     @abc.abstractmethod
-    def get_execution_command(self, job, job_state, config, session_dir,
-                              nest_dir):
+    def get_execution_command(self, command, job, job_state, config,
+                              session_dir, nest_dir):
         """
         Get the command to execute the specified job
 
+        :param command:
+            Command to execute in the context of the job. This may be one of
+            ``job.command``, ``job.pre_command`` or ``job.post_command``.
         :param job:
             job definition with the command and environment definitions
         :param job_state:
@@ -832,11 +854,14 @@ class UserJobExecutionController(CheckBoxExecutionController):
     An execution controller that works for jobs invoked as the current user.
     """
 
-    def get_execution_command(self, job, job_state, config, session_dir,
-                              nest_dir):
+    def get_execution_command(self, command, job, job_state, config,
+                              session_dir, nest_dir):
         """
         Get the command to execute the specified job
 
+        :param command:
+            Command to execute in the context of the job. This may be one of
+            ``job.command``, ``job.pre_command`` or ``job.post_command``.
         :param job:
             job definition with the command and environment definitions
         :param job_state:
@@ -870,9 +895,9 @@ class UserJobExecutionController(CheckBoxExecutionController):
 
         """
         if 'win32' in job.get_flag_set():
-            return ['cmd.exe', '/C', job.command]
+            return ['cmd.exe', '/C', command]
         else:
-            return [job.shell, '-c', job.command]
+            return [job.shell, '-c', command]
 
     def get_checkbox_score(self, job):
         """
@@ -912,11 +937,15 @@ class QmlJobExecutionController(CheckBoxExecutionController):
     QML_MODULES_PATH = os.path.join(get_plainbox_dir(), 'data',
                                     'plainbox-qml-modules')
 
-    def get_execution_command(self, job, job_state, config, session_dir,
-                              nest_dir, shell_out_fd, shell_in_fd):
+    def get_execution_command(self, command, job, job_state, config,
+                              session_dir, nest_dir, shell_out_fd,
+                              shell_in_fd):
         """
         Get the command to execute the specified job
 
+        :param command:
+            The command to run. This _may_ be None or it can be one of
+            ``job.pre_command`` or ``job.post_command``.
         :param job:
             job definition with the command and environment definitions
         :param job_state:
@@ -940,12 +969,14 @@ class QmlJobExecutionController(CheckBoxExecutionController):
             information from plainbox to qml shell.
         :returns:
             List of command arguments
-
         """
-        cmd = ['qmlscene', '-I', self.QML_MODULES_PATH, '--job', job.qml_file,
-               '--fd-out', shell_out_fd, '--fd-in', shell_in_fd,
-               self.QML_SHELL_PATH]
-        return cmd
+        if command is not None:
+            return super().get_execution_command(
+                command, job, job_state, config, session_dir, nest_dir)
+        else:
+            return ['qmlscene', '-I', self.QML_MODULES_PATH, '--job',
+                    job.qml_file, '--fd-out', shell_out_fd, '--fd-in',
+                    shell_in_fd, self.QML_SHELL_PATH]
 
     def get_checkbox_score(self, job):
         """
@@ -1025,12 +1056,24 @@ class QmlJobExecutionController(CheckBoxExecutionController):
                                   shell_read, plainbox_write):
                 # Get the command and the environment.
                 # of this execution controller
+                if job.pre_command:
+                    pre_cmd = self.get_execution_command(
+                        job.pre_command, job, job_state, config, session_dir,
+                        nest_dir, None, None)
+                else:
+                    pre_cmd = None
                 cmd = self.get_execution_command(
-                    job, job_state, config, session_dir, nest_dir,
+                    job.command, job, job_state, config, session_dir, nest_dir,
                     str(shell_write), str(shell_read))
+                if job.post_command:
+                    post_cmd = self.get_execution_command(
+                        job.post_command, job, job_state, config, session_dir,
+                        nest_dir, None, None)
+                else:
+                    post_cmd = None
                 env = self.get_execution_environment(
                     job, job_state, config, session_dir, nest_dir)
-                with self.temporary_cwd(job, config) as cwd_dir:
+                with self.temporary_cwd(job, config) as cwd:
                     testing_shell_data = json.dumps({
                         "job_repr": self.gen_job_repr(job),
                         "session_dir": self.get_CHECKBOX_DATA(session_dir)
@@ -1041,9 +1084,16 @@ class QmlJobExecutionController(CheckBoxExecutionController):
                     # run the command
                     logger.debug(_("job[%s] executing %r with"
                                    "env %r in cwd %r"),
-                                 job.id, cmd, env, cwd_dir)
-                    ret = extcmd_popen.call(cmd, env=env, cwd=cwd_dir,
-                                            pass_fds=[shell_write, shell_read])
+                                 job.id, cmd, env, cwd)
+                    if pre_cmd:
+                        return_code = extcmd_popen.call(
+                            pre_cmd, env=env, cwd=cwd)
+                        # Short-circuit abort if the pre command fails
+                        if return_code:
+                            return return_code
+                    return_code = extcmd_popen.call(
+                        cmd, env=env, cwd=cwd, pass_fds=[shell_write,
+                                                         shell_read])
                     os.close(shell_read)
                     os.close(shell_write)
                     pipe_in = os.fdopen(plainbox_read)
@@ -1051,8 +1101,10 @@ class QmlJobExecutionController(CheckBoxExecutionController):
                     pipe_in.close()
                     if 'noreturn' in job.get_flag_set():
                         self._halt()
-                    if ret != 0:
-                        return ret
+                    if post_cmd:
+                        extcmd_popen.call(post_cmd, env=env, cwd=cwd)
+                    if return_code != 0:
+                        return return_code
                     try:
                         result = json.loads(res_object_json_string)
                         if result['outcome'] == "pass":
@@ -1182,11 +1234,14 @@ class RootViaPTL1ExecutionController(CheckBoxDifferentialExecutionController):
             result = exc.output
         self.is_supported = True if result.strip() == action_id else False
 
-    def get_execution_command(self, job, job_state, config, session_dir,
-                              nest_dir):
+    def get_execution_command(self, command, job, job_state, config,
+                              session_dir, nest_dir):
         """
         Get the command to invoke.
 
+        :param command:
+            Command to execute in the context of the job. This may be one of
+            ``job.command``, ``job.pre_command`` or ``job.post_command``.
         :param job:
             job definition with the command and environment definitions
         :param job_state:
@@ -1227,6 +1282,14 @@ class RootViaPTL1ExecutionController(CheckBoxDifferentialExecutionController):
         cmd += ['--target', job.checksum]
         env = self.get_differential_execution_environment(
             job, job_state, config, session_dir, nest_dir)
+        if job.command == command:
+            pass
+        elif job.pre_command == command:
+            cmd += '--pre-command'
+        elif job.post_command == command:
+            cmd += '--post-command'
+        else:
+            raise ValueError("command is not pre/main/post command")
         for key, value in sorted(env.items()):
             cmd += ['-T', '{}={}'.format(key, value)]
         return cmd
@@ -1299,11 +1362,14 @@ class RootViaPkexecExecutionController(
     root from the non-system-wide location.
     """
 
-    def get_execution_command(self, job, job_state, config, session_dir,
-                              nest_dir):
+    def get_execution_command(self, command, job, job_state, config,
+                              session_dir, nest_dir):
         """
         Get the command to invoke.
 
+        :param command:
+            Command to execute in the context of the job. This may be one of
+            ``job.command``, ``job.pre_command`` or ``job.post_command``.
         :param job:
             job definition with the command and environment definitions
         :param job_state:
@@ -1334,7 +1400,7 @@ class RootViaPkexecExecutionController(
         cmd += ["{key}={value}".format(key=key, value=value)
                 for key, value in sorted(env.items())]
         # Lastly use job.shell -c, to run our command
-        cmd += [job.shell, '-c', job.command]
+        cmd += [job.shell, '-c', command]
         return cmd
 
     def get_checkbox_score(self, job):
@@ -1391,11 +1457,14 @@ class RootViaSudoExecutionController(
             in_admin_group = False
         self.user_can_sudo = in_sudo_group or in_admin_group
 
-    def get_execution_command(self, job, job_state, config, session_dir,
-                              nest_dir):
+    def get_execution_command(self, command, job, job_state, config,
+                              session_dir, nest_dir):
         """
         Get the command to invoke.
 
+        :param command:
+            Command to execute in the context of the job. This may be one of
+            ``job.command``, ``job.pre_command`` or ``job.post_command``.
         :param job:
             job definition with the command and environment definitions
         :param job_state:
@@ -1424,7 +1493,7 @@ class RootViaSudoExecutionController(
         cmd += ["{key}={value}".format(key=key, value=value)
                 for key, value in sorted(env.items())]
         # Lastly use job.shell -c, to run our command
-        cmd += [job.shell, '-c', job.command]
+        cmd += [job.shell, '-c', command]
         return cmd
 
     def get_checkbox_score(self, job):
