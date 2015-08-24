@@ -311,6 +311,14 @@ class JobDefinition(UnitWithId, JobDefinitionLegacyAPI, IJobDefinition):
         return self.get_record_value('command')
 
     @property
+    def pre_command(self):
+        return self.get_record_value('pre-command')
+
+    @property
+    def post_command(self):
+        return self.get_record_value('post-command')
+
+    @property
     def environ(self):
         return self.get_record_value('environ')
 
@@ -678,6 +686,8 @@ class JobDefinition(UnitWithId, JobDefinitionLegacyAPI, IJobDefinition):
             summary = 'summary'
             plugin = 'plugin'
             command = 'command'
+            pre_command = 'pre-command'
+            post_command = 'post-command'
             description = 'description'
             user = 'user'
             environ = 'environ'
@@ -764,6 +774,54 @@ class JobDefinition(UnitWithId, JobDefinitionLegacyAPI, IJobDefinition):
                     message=_("please use PLAINBOX_SESSION_SHARE"
                               " instead of CHECKBOX_DATA"),
                     onlyif=lambda unit: unit.command is not None),
+                # We want to catch silly mistakes that shlex can detect
+                ShellProgramValidator,
+            ],
+            fields.pre_command: [
+                UntranslatableFieldValidator,
+                # QML and manual jobs cannot have a pre/post command
+                UselessFieldValidator(
+                    message=_(
+                        "pre-command on a manual or qml job makes no sense"),
+                    onlyif=lambda unit: unit.plugin in ('manual', 'qml')),
+                # We don't want to refer to CHECKBOX_SHARE anymore
+                CorrectFieldValueValidator(
+                    lambda pre_command: "CHECKBOX_SHARE" not in pre_command,
+                    Problem.deprecated, Severity.advice,
+                    message=_("please use PLAINBOX_PROVIDER_DATA"
+                              " instead of CHECKBOX_SHARE"),
+                    onlyif=lambda unit: unit.pre_command is not None),
+                # We don't want to refer to CHECKBOX_DATA anymore
+                CorrectFieldValueValidator(
+                    lambda pre_command: "CHECKBOX_DATA" not in pre_command,
+                    Problem.deprecated, Severity.advice,
+                    message=_("please use PLAINBOX_SESSION_SHARE"
+                              " instead of CHECKBOX_DATA"),
+                    onlyif=lambda unit: unit.pre_command is not None),
+                # We want to catch silly mistakes that shlex can detect
+                ShellProgramValidator,
+            ],
+            fields.post_command: [
+                UntranslatableFieldValidator,
+                # QML and manual jobs cannot have a pre/post command
+                UselessFieldValidator(
+                    message=_(
+                        "post-command on a manual or qml job makes no sense"),
+                    onlyif=lambda unit: unit.plugin in ('manual', 'qml')),
+                # We don't want to refer to CHECKBOX_SHARE anymore
+                CorrectFieldValueValidator(
+                    lambda post_command: "CHECKBOX_SHARE" not in post_command,
+                    Problem.deprecated, Severity.advice,
+                    message=_("please use PLAINBOX_PROVIDER_DATA"
+                              " instead of CHECKBOX_SHARE"),
+                    onlyif=lambda unit: unit.post_command is not None),
+                # We don't want to refer to CHECKBOX_DATA anymore
+                CorrectFieldValueValidator(
+                    lambda post_command: "CHECKBOX_DATA" not in post_command,
+                    Problem.deprecated, Severity.advice,
+                    message=_("please use PLAINBOX_SESSION_SHARE"
+                              " instead of CHECKBOX_DATA"),
+                    onlyif=lambda unit: unit.post_command is not None),
                 # We want to catch silly mistakes that shlex can detect
                 ShellProgramValidator,
             ],
