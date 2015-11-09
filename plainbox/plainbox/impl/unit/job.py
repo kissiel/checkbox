@@ -782,8 +782,8 @@ class JobDefinition(UnitWithId, JobDefinitionLegacyAPI, IJobDefinition):
                 # QML and manual jobs cannot have a pre/post command
                 UselessFieldValidator(
                     message=_(
-                        "pre-command on a manual or qml job makes no sense"),
-                    onlyif=lambda unit: unit.plugin in ('manual', 'qml')),
+                        "pre-command on a manual job makes no sense"),
+                    onlyif=lambda unit: unit.plugin == 'manual'),
                 # We don't want to refer to CHECKBOX_SHARE anymore
                 CorrectFieldValueValidator(
                     lambda pre_command: "CHECKBOX_SHARE" not in pre_command,
@@ -806,8 +806,8 @@ class JobDefinition(UnitWithId, JobDefinitionLegacyAPI, IJobDefinition):
                 # QML and manual jobs cannot have a pre/post command
                 UselessFieldValidator(
                     message=_(
-                        "post-command on a manual or qml job makes no sense"),
-                    onlyif=lambda unit: unit.plugin in ('manual', 'qml')),
+                        "post-command on a manual job makes no sense"),
+                    onlyif=lambda unit: unit.plugin == 'manual'),
                 # We don't want to refer to CHECKBOX_SHARE anymore
                 CorrectFieldValueValidator(
                     lambda post_command: "CHECKBOX_SHARE" not in post_command,
