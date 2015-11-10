@@ -591,6 +591,7 @@ class CheckBoxExecutionControllerTestsMixIn:
         self.extcmd_popen = mock.Mock(
             name='extcmd_popen',
             spec=extcmd.ExternalCommand)
+        self.extcmd_popen.call.return_value = 0
 
     @mock.patch('plainbox.impl.ctrl.check_output')
     def test_init(self, mock_check_output):
@@ -694,8 +695,8 @@ class UserJobExecutionControllerTests(CheckBoxExecutionControllerTestsMixIn,
         """
         self.assertEqual(
             self.ctrl.get_execution_command(
-                self.job, self.job_state, self.config, self.SESSION_DIR,
-                self.NEST_DIR),
+                self.job.command, self.job, self.job_state, self.config,
+                self.SESSION_DIR, self.NEST_DIR),
             [self.job.shell, '-c', self.job.command])
 
     def test_get_checkbox_score_for_jobs_without_user(self):
@@ -887,8 +888,8 @@ class RootViaPTL1ExecutionControllerTests(
             '-T', 'PLAINBOX_SESSION_SHARE=session-dir/CHECKBOX_DATA',
         ]
         actual = self.ctrl.get_execution_command(
-            self.job, self.job_state, self.config, self.SESSION_DIR,
-            self.NEST_DIR)
+            self.job.command, self.job, self.job_state, self.config,
+            self.SESSION_DIR, self.NEST_DIR)
         self.assertEqual(actual, expected)
 
     @mock.patch.dict('os.environ', clear=True, PATH='vanilla-path')
@@ -914,8 +915,8 @@ class RootViaPTL1ExecutionControllerTests(
             '-T', 'PLAINBOX_SESSION_SHARE=session-dir/CHECKBOX_DATA',
         ]
         actual = self.ctrl.get_execution_command(
-            self.job, self.job_state, self.config, self.SESSION_DIR,
-            self.NEST_DIR)
+            self.job.command, self.job, self.job_state, self.config,
+            self.SESSION_DIR, self.NEST_DIR)
         self.assertEqual(actual, expected)
 
     def test_get_checkbox_score_for_other_providers(self):
@@ -1035,8 +1036,8 @@ class RootViaPkexecExecutionControllerTests(
         self.job.get_environ_settings.return_value = []
         self.assertEqual(
             self.ctrl.get_execution_command(
-                self.job, self.job_state, self.config, self.SESSION_DIR,
-                self.NEST_DIR),
+                self.job.command, self.job, self.job_state, self.config,
+                self.SESSION_DIR, self.NEST_DIR),
             ['pkexec', '--user', self.job.user,
              'env',
              'CHECKBOX_DATA=session-dir/CHECKBOX_DATA',
@@ -1080,8 +1081,8 @@ class RootViaSudoExecutionControllerTests(
         self.job.get_environ_settings.return_value = []
         self.assertEqual(
             self.ctrl.get_execution_command(
-                self.job, self.job_state, self.config, self.SESSION_DIR,
-                self.NEST_DIR),
+                self.job.command, self.job, self.job_state, self.config,
+                self.SESSION_DIR, self.NEST_DIR),
             ['sudo', '-u', self.job.user, 'env',
              'CHECKBOX_DATA=session-dir/CHECKBOX_DATA',
              'CHECKBOX_SHARE=CHECKBOX_SHARE',
@@ -1189,12 +1190,14 @@ class QmlJobExecutionControllerTests(CheckBoxExecutionControllerTestsMixIn,
         """
         self.assertEqual(
             self.ctrl.get_execution_command(
-                self.job, self.job_state, self.config, self.SESSION_DIR,
-                self.NEST_DIR, self.SHELL_OUT_FD, self.SHELL_IN_FD),
+                None, self.job, self.job_state, self.config,
+                self.SESSION_DIR, self.NEST_DIR, self.SHELL_OUT_FD,
+                self.SHELL_IN_FD),
             ['qmlscene', '-I', self.ctrl.QML_MODULES_PATH, '--job',
              self.job.qml_file, '--fd-out', self.SHELL_OUT_FD, '--fd-in',
              self.SHELL_IN_FD, self.ctrl.QML_SHELL_PATH])
 
+    @mock.patch('json.loads')
     @mock.patch('json.dumps')
     @mock.patch('os.path.isdir')
     @mock.patch('os.fdopen')
@@ -1202,12 +1205,14 @@ class QmlJobExecutionControllerTests(CheckBoxExecutionControllerTestsMixIn,
     @mock.patch('os.write')
     @mock.patch('os.close')
     def test_execute_job(self, mock_os_close, mock_os_write, mock_os_pipe,
-                         mock_os_fdopen, mock_os_path_isdir, mock_json_dumps):
+                         mock_os_fdopen, mock_os_path_isdir, mock_json_dumps,
+                         mock_json_loads):
         """
         Test if qml exec. ctrl. correctly runs piping
         """
         mock_os_pipe.side_effect = [("pipe0_r", "pipe0_w"),
                                     ("pipe1_r", "pipe1_w")]
+        mock_json_loads.return_value = {'outcome': 'pass'}
         with mock.patch.object(self.ctrl, 'get_execution_command'), \
                 mock.patch.object(self.ctrl, 'get_execution_environment'), \
                 mock.patch.object(self.ctrl, 'configured_filesystem'), \
@@ -1223,9 +1228,12 @@ class QmlJobExecutionControllerTests(CheckBoxExecutionControllerTestsMixIn,
             # Urgh! is this doable somehow without all that?
             nest_dir = self.ctrl.configured_filesystem().__enter__()
             cwd_dir = self.ctrl.temporary_cwd().__enter__()
-            self.extcmd_popen.call.assert_called_with(
+            self.job.pre_command = None
+            self.job.post_command = None
+            self.extcmd_popen.call.assert_any_call(
                 self.ctrl.get_execution_command(
-                    self.job, self.config, self.SESSION_DIR, nest_dir),
+                    None, self.job, self.config, self.SESSION_DIR,
+                    nest_dir),
                 env=self.ctrl.get_execution_environment(
                     self.job, self.config, self.SESSION_DIR, nest_dir),
                 cwd=cwd_dir,
