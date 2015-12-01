@@ -878,13 +878,13 @@ class SessionResumeHelper1(MetaDataHelper1MixIn):
             # - All of the jobs that we need to run (aka, the desired jobs
             #   list). This is pretty obvious and it is exactly what must
             #   be preserved or trim_job_list() will complain
-            set([job.id for job in session.run_list])
+            set([job.id for job in session.run_list]) |
             # - All of the jobs that have representation (aka checksum).
             #   We want those jobs because they have results (or they would not
             #   end up in the list as of format v4). If they have results we
             #   just have to keep them. Perhaps the session had a different
             #   selection earlier, who knows.
-            | set(jobs_repr)
+            set(jobs_repr)
         )
         try:
             # NOTE: this should never raise ValueError (which signals that we
@@ -922,16 +922,16 @@ class SessionResumeHelper1(MetaDataHelper1MixIn):
         if 'io_log_filename' in result_repr:
             io_log_filename = cls._load_io_log_filename(
                 result_repr, flags, location)
-            if (flags & cls.FLAG_FILE_REFERENCE_CHECKS_F
-                    and not os.path.isfile(io_log_filename)
-                    and flags & cls.FLAG_REWRITE_LOG_PATHNAMES_F):
+            if (flags & cls.FLAG_FILE_REFERENCE_CHECKS_F and
+                    not os.path.isfile(io_log_filename) and
+                    flags & cls.FLAG_REWRITE_LOG_PATHNAMES_F):
                 io_log_filename2 = cls._rewrite_pathname(io_log_filename,
                                                          location)
                 logger.warning(_("Rewrote file name from %r to %r"),
                                io_log_filename, io_log_filename2)
                 io_log_filename = io_log_filename2
-            if (flags & cls.FLAG_FILE_REFERENCE_CHECKS_F
-                    and not os.path.isfile(io_log_filename)):
+            if (flags & cls.FLAG_FILE_REFERENCE_CHECKS_F and
+                    not os.path.isfile(io_log_filename)):
                 raise BrokenReferenceToExternalFile(
                     _("cannot access file: {!r}").format(io_log_filename))
             return DiskJobResult({
@@ -1079,6 +1079,7 @@ class SessionResumeHelper5(SessionResumeHelper4):
         if location is None:
             raise ValueError("Location must be a directory name")
         return os.path.join(location, io_log_filename)
+
 
 class SessionResumeHelper6(SessionResumeHelper5):
     """
