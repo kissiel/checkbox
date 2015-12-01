@@ -200,6 +200,8 @@ class SessionPeekHelper(EnvelopeUnpackMixIn):
             return SessionPeekHelper5().peek_json(json_repr)
         elif version == 6:
             return SessionPeekHelper6().peek_json(json_repr)
+        elif version == 7:
+            return SessionPeekHelper7().peek_json(json_repr)
         else:
             raise IncompatibleSessionError(
                 _("Unsupported version {}").format(version))
@@ -327,6 +329,9 @@ class SessionResumeHelper(EnvelopeUnpackMixIn):
                 self.job_list, self.flags, self.location)
         elif version == 6:
             helper = SessionResumeHelper6(
+                self.job_list, self.flags, self.location)
+        elif version == 7:
+            helper = SessionResumeHelper7(
                 self.job_list, self.flags, self.location)
         else:
             raise IncompatibleSessionError(
@@ -543,6 +548,19 @@ class SessionPeekHelper6(SessionPeekHelper5):
 
     This class works with data constructed by
     :class:`~plainbox.impl.session.suspend.SessionSuspendHelper6` which has
+    been pre-processed by :class:`SessionPeekHelper` (to strip the initial
+    envelope).
+
+    The only goal of this class is to reconstruct session state meta-data.
+    """
+
+
+class SessionPeekHelper7(SessionPeekHelper6):
+    """
+    Helper class for implementing session peek feature
+
+    This class works with data constructed by
+    :class:`~plainbox.impl.session.suspend.SessionSuspendHelper7` which has
     been pre-processed by :class:`SessionPeekHelper` (to strip the initial
     envelope).
 
@@ -1117,6 +1135,12 @@ class SessionResumeHelper6(SessionResumeHelper5):
         # Return whatever we've got
         logger.debug(_("Resume complete!"))
         return session
+
+
+class SessionResumeHelper7(SessionResumeHelper6):
+    """
+    Helper class for implementing session resume feature
+    """
 
 
 def _validate(obj, **flags):

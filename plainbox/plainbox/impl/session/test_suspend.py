@@ -41,6 +41,7 @@ from plainbox.impl.session.suspend import SessionSuspendHelper3
 from plainbox.impl.session.suspend import SessionSuspendHelper4
 from plainbox.impl.session.suspend import SessionSuspendHelper5
 from plainbox.impl.session.suspend import SessionSuspendHelper6
+from plainbox.impl.session.suspend import SessionSuspendHelper7
 from plainbox.impl.testing_utils import make_job
 from plainbox.vendor import mock
 
@@ -985,6 +986,151 @@ class SessionSuspendHelper6Tests(SessionSuspendHelper5Tests):
                 'running_job_name': None,
                 'app_blob': None,
                 'app_id': None,
+            },
+        })
+
+
+class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
+    """Tests for various methods of SessionSuspendHelper7."""
+    def setUp(self):
+        self.helper = SessionSuspendHelper7()
+        self.session_dir = None
+
+    def test_json_repr_current_version(self):
+        """
+        verify what the version field is
+        """
+        data = self.helper._json_repr(SessionState([]), self.session_dir)
+        self.assertEqual(data['version'], 7)
+
+    @mock.patch('datetime.datetime')
+    def test_suspend(self, mock_dt):
+        mock_dt.timestamp.return_value = 5
+        data = self.helper.suspend(SessionState([]), self.session_dir)
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(gzip.decompress(data), (
+            b'{"session":{"desired_job_list":[],"jobs":{},'
+            b'"mandatory_job_list":[],"metadata":'
+            b'{"app_blob":null,"app_id":null,"flags":[],'
+            b'"running_job_name":null,"timestamp":5,"title":null},'
+            b'"results":{},"selected_test_plans":[]},"version":7}'))
+
+    @mock.patch('datetime.datetime')
+    def test_repr_SessionState_empty_session(self, mock_dt):
+        """
+        verify that representation of empty SessionState is okay
+        """
+        mock_dt.timestamp.return_value = 20
+        data = self.helper._repr_SessionState(
+            SessionState([]), self.session_dir)
+        self.assertEqual(data, {
+            'jobs': {},
+            'results': {},
+            'desired_job_list': [],
+            'mandatory_job_list': [],
+            'selected_test_plans': [],
+            'metadata': {
+                'title': None,
+                'flags': [],
+                'running_job_name': None,
+                'app_blob': None,
+                'app_id': None,
+                'timestamp': 20
+            },
+        })
+
+    def test_repr_SessionMetaData_empty_metadata(self):
+        """
+        verify that representation of empty SessionMetaData is okay
+        """
+        # all defaults with empty values
+        data = self.helper._repr_SessionMetaData(
+            SessionMetaData(), self.session_dir)
+        self.assertEqual(data, {
+            'title': None,
+            'flags': [],
+            'running_job_name': None,
+            'app_blob': None,
+            'app_id': None,
+            'timestamp': None,
+        })
+
+    def test_repr_SessionMetaData_typical_metadata(self):
+        """
+        verify that representation of typical SessionMetaData is okay
+        """
+        # no surprises here, just the same data copied over
+        data = self.helper._repr_SessionMetaData(SessionMetaData(
+            title='USB Testing session',
+            flags=['incomplete'],
+            running_job_name='usb/detect',
+            app_blob=b'blob',
+            app_id='com.canonical.certification.plainbox',
+            timestamp=100.0,
+        ), self.session_dir)
+        self.assertEqual(data, {
+            'title': 'USB Testing session',
+            'flags': ['incomplete'],
+            'running_job_name': 'usb/detect',
+            'app_blob': 'YmxvYg==',
+            'app_id': 'com.canonical.certification.plainbox',
+            'timestamp': 100.0
+        })
+
+    @mock.patch('datetime.datetime')
+    def test_repr_SessionState_typical_session(self, mock_dt):
+        """
+        verify the representation of a SessionState with some unused jobs
+
+        Unused jobs should just have no representation. Their checksum
+        should not be mentioned. Their results (empty results) should be
+        ignored.
+        """
+        mock_dt.timestamp.return_value = 40
+        used_job = JobDefinition({
+            "plugin": "shell",
+            "id": "used",
+            "command": "echo 'hello world'",
+        })
+        unused_job = JobDefinition({
+            "plugin": "shell",
+            "id": "unused",
+            "command": "echo 'hello world'",
+        })
+        used_result = MemoryJobResult({
+            "io_log": [
+                (0.0, "stdout", b'hello world\n'),
+            ],
+            'outcome': IJobResult.OUTCOME_PASS
+        })
+        session_state = SessionState([used_job, unused_job])
+        session_state.update_desired_job_list([used_job])
+        session_state.update_job_result(used_job, used_result)
+        data = self.helper._repr_SessionState(session_state, self.session_dir)
+        self.assertEqual(data, {
+            'jobs': {
+                'used': ('8c393c19fdfde1b6afc5b79d0a1617ecf7531cd832a16450dc'
+                         '2f3f50d329d373')
+            },
+            'results': {
+                'used': [{
+                    'comments': None,
+                    'execution_duration': None,
+                    'io_log': [[0.0, 'stdout', 'aGVsbG8gd29ybGQK']],
+                    'outcome': 'pass',
+                    'return_code': None
+                }]
+            },
+            'desired_job_list': ['used'],
+            'mandatory_job_list': [],
+            'selected_test_plans': [],
+            'metadata': {
+                'title': None,
+                'flags': [],
+                'running_job_name': None,
+                'app_blob': None,
+                'app_id': None,
+                'timestamp': 40,
             },
         })
 

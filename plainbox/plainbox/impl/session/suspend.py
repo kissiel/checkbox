@@ -83,6 +83,8 @@ Serialization format versions
 5) Same as '4' but DiskJobResult is stored with a relative pathname to the log
    file if session_dir is provided.
 6) Same as '5' plus store the list of mandatory jobs.
+7) Same as '6' plus store session's timestamp and the list of test plan ids
+   that were selected for execution.
 """
 
 import base64
@@ -647,5 +649,127 @@ class SessionSuspendHelper6(SessionSuspendHelper5):
             "metadata": self._repr_SessionMetaData(obj.metadata, session_dir),
         }
 
+class SessionSuspendHelper7(SessionSuspendHelper6):
+    """
+    Helper class for computing binary representation of a session.
+
+    The helper only creates a bytes object to save. Actual saving should
+    be performed using some other means, preferably using
+    :class:`~plainbox.impl.session.storage.SessionStorage`.
+
+    This class creates version '7' snapshots.
+    """
+
+    VERSION = 7
+
+    def _repr_SessionState(self, obj, session_dir):
+        """
+        Compute the representation of :class:`SessionState`.
+
+        :returns:
+            JSON-friendly representation
+        :rtype:
+            dict
+
+        The result is a dictionary with the following items:
+
+            ``jobs``:
+                Dictionary mapping job id to job checksum.
+                The checksum is computed with
+                :attr:`~plainbox.impl.job.JobDefinition.checksum`.
+                Two kinds of jobs are mentioned here:
+                    - jobs that ever ran and have a result
+                    - jobs that may run (are on the run list now)
+                The idea is to capture the "state" of the jobs that are
+                "important" to this session, that should be checked for
+                modifications when the session resumes later.
+
+            ``results``
+                Dictionary mapping job id to a list of results.
+                Each result is represented by data computed by
+                :meth:`_repr_JobResult()`. Only jobs that actually have
+                a result are mentioned here. The automatically generated
+                "None" result that is always present for every job is skipped.
+
+            ``desired_job_list``:
+                List of (ids) of jobs that are desired (to be executed)
+
+            ``mandatory_job_list``:
+                List of (ids) of jobs that must be executed
+
+            ``selected_test_plans``:
+                List of (ids) of test plans that were selected for execution
+
+            ``metadata``:
+                The representation of meta-data associated with the session
+                state object.
+        """
+        id_run_list = frozenset([job.id for job in obj.run_list])
+        return {
+            "jobs": {
+                state.job.id: state.job.checksum
+                for state in obj.job_state_map.values()
+                if not state.result.is_hollow or state.job.id in id_run_list
+            },
+            "results": {
+                state.job.id: [self._repr_JobResult(result, session_dir)
+                               for result in state.result_history]
+                for state in obj.job_state_map.values()
+                if len(state.result_history) > 0
+            },
+            "desired_job_list": [
+                job.id for job in obj.desired_job_list
+            ],
+            "mandatory_job_list": [
+                job.id for job in obj.mandatory_job_list
+            ],
+            "selected_test_plans": obj.selected_test_plans,
+            "metadata": self._repr_SessionMetaData(obj.metadata, session_dir),
+        }
+
+    def _repr_SessionMetaData(self, obj, session_dir):
+        """
+        Compute the representation of :class:`SessionMetaData`.
+
+        :returns:
+            JSON-friendly representation.
+        :rtype:
+            dict
+
+        The result is a dictionary with the following items:
+
+            ``title``:
+                Title of the session. Arbitrary text provided by the
+                application.
+
+            ``flags``:
+                List of strings that enumerate the flags the session is in.
+                There are some well-known flags but this list can have any
+                items it it.
+
+            ``running_job_name``:
+                Id of the job that was about to be executed before
+                snapshotting took place. Can be None.
+
+            ``app_blob``:
+                Arbitrary application specific binary blob encoded with base64.
+                This field may be null.
+
+            ``app_id``:
+                A string identifying the application that stored app_blob.
+                Thirs field may be null.
+
+            ``timestamp``:
+                A POSIX timestamp of the time when the session was created.
+        """
+        # reuse previous version
+        data = super(SessionSuspendHelper7, self)._repr_SessionMetaData(
+            obj, session_dir)
+        # and add the timestamp
+        data['timestamp'] = obj.timestamp
+        return data
+
+
+
 # Alias for the most recent version
-SessionSuspendHelper = SessionSuspendHelper6
+SessionSuspendHelper = SessionSuspendHelper7

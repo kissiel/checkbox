@@ -22,6 +22,7 @@ Session State Handling.
 ============================================================
 """
 import collections
+import datetime
 import logging
 import re
 
@@ -70,7 +71,7 @@ class SessionMetaData:
     FLAG_BOOTSTRAPPING = "bootstrapping"
 
     def __init__(self, title=None, flags=None, running_job_name=None,
-                 app_blob=None, app_id=None):
+                 app_blob=None, app_id=None, timestamp=None):
         """Initialize a new session state meta-data object."""
         if flags is None:
             flags = []
@@ -79,6 +80,7 @@ class SessionMetaData:
         self._running_job_name = running_job_name
         self._app_blob = app_blob
         self._app_id = app_id
+        self._timestamp = timestamp
 
     def __repr__(self):
         """Get the representation of the session state meta-data."""
@@ -185,6 +187,16 @@ class SessionMetaData:
             raise TypeError(_("app_id must be either None or str"))
         self._app_id = value
 
+    @property
+    def timestamp(self):
+        """
+        POSIX time when the session was created.
+
+        Note that this a simple number (POSIX timestamp) to store this value,
+        as it's easier to (de)serialize, and most of the time it will be used
+        for sorting.
+        """
+        return self._timestamp
 
 class SessionDeviceContext:
 
@@ -365,6 +377,7 @@ class SessionDeviceContext:
         added to the system.
         """
         self._test_plan_list = test_plan_list
+        self._state.selected_test_plans = [unit.id for unit in test_plan_list]
         self._invalidate_override_map()
         self._bulk_override_update()
         if test_plan_list:
@@ -790,7 +803,9 @@ class SessionState:
         self._mandatory_job_list = []
         self._run_list = []
         self._resource_map = {}
-        self._metadata = SessionMetaData()
+        self._selected_test_plans = []
+        self._metadata = SessionMetaData(
+            timestamp=datetime.datetime.timestamp(datetime.datetime.utcnow()))
         super(SessionState, self).__init__()
 
     def trim_job_list(self, qualifier):
@@ -1198,6 +1213,16 @@ class SessionState:
     def resource_map(self):
         """Map from resource id to a list of resource records."""
         return self._resource_map
+
+    @property
+    def selected_test_plans(self):
+        """List of test plan ids that have been selected for execution."""
+        return self._selected_test_plans
+
+    @selected_test_plans.setter
+    def selected_test_plans(self, test_plans):
+        """set the list of selected test plans."""
+        self._selected_test_plans = test_plans
 
     def get_outcome_stats(self):
         """
