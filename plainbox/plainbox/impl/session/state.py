@@ -812,6 +812,7 @@ class SessionState:
             return f(*args, **kwargs)
         return decorator
 
+    @_bumps_modified
     def trim_job_list(self, qualifier):
         """
         Discard jobs that are selected by the given qualifier.
@@ -879,6 +880,7 @@ class SessionState:
                 self.on_job_removed(job)
                 self.on_unit_removed(job)
 
+    @_bumps_modified
     def update_mandatory_job_list(self, mandatory_job_list):
         """
         Update the set of mandatory jobs (that must run).
@@ -890,6 +892,7 @@ class SessionState:
         """
         self._mandatory_job_list = mandatory_job_list
 
+    @_bumps_modified
     def update_desired_job_list(self, desired_job_list):
         """
         Update the set of desired jobs (that ought to run).
@@ -986,6 +989,7 @@ class SessionState:
                     estimate_manual = None
         return (estimate_automated, estimate_manual)
 
+    @_bumps_modified
     def update_job_result(self, job, result):
         """
         Notice the specified test result and update readiness state.
@@ -1013,6 +1017,7 @@ class SessionState:
         job.controller.observe_result(self, job, result)
         self._recompute_job_readiness()
 
+    @_bumps_modified
     @deprecated('0.9', 'use the add_unit() method instead')
     def add_job(self, new_job, recompute=True):
         """
@@ -1047,6 +1052,7 @@ class SessionState:
         """
         return self.add_unit(new_job, recompute)
 
+    @_bumps_modified
     def add_unit(self, new_unit, recompute=True):
         """
         Add a new unit to the session.
@@ -1119,6 +1125,7 @@ class SessionState:
             if recompute:
                 self._recompute_job_readiness()
 
+    @_bumps_modified
     def remove_unit(self, unit, *, recompute=True):
         """
         Remove an existing unit from the session.
@@ -1152,6 +1159,7 @@ class SessionState:
             self.on_job_removed(unit)
             self.on_job_state_map_changed()
 
+    @_bumps_modified
     def set_resource_list(self, resource_id, resource_list):
         """
         Add or change a resource with the given id.
@@ -1224,6 +1232,7 @@ class SessionState:
         return self._selected_test_plans
 
     @selected_test_plans.setter
+    @_bumps_modified
     def selected_test_plans(self, test_plans):
         """set the list of selected test plans."""
         self._selected_test_plans = test_plans
@@ -1277,6 +1286,7 @@ class SessionState:
         """meta-data object associated with this session state."""
         return self._metadata
 
+    @_bumps_modified
     def _recompute_job_readiness(self):
         """
         Internal method of SessionState.
