@@ -1153,7 +1153,7 @@ class SessionResumeHelper6(SessionResumeHelper5):
         logger.debug(_("Starting to restore job list..."))
         self._restore_SessionState_job_list(session, session_repr)
         # Return whatever we've got
-        logger.debug(_("Resume complete!"))
+        logger.debug(_("Restored bits related to version 6."))
         return session
 
 
