@@ -806,6 +806,12 @@ class SessionState:
         self._metadata = SessionMetaData(timestamp=datetime.datetime.utcnow())
         super(SessionState, self).__init__()
 
+    def _bumps_modified(f):
+        def decorator(*args, **kwargs):
+            args[0]._metadata.modified_timestamp = datetime.datetime.utcnow()
+            return f(*args, **kwargs)
+        return decorator
+
     def trim_job_list(self, qualifier):
         """
         Discard jobs that are selected by the given qualifier.
