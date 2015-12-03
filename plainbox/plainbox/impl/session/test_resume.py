@@ -387,6 +387,24 @@ class SessionPeekHelperTests(TestCase):
                              'results': {}},
                  'version': 6})
 
+    def test_peek_dispatch_v7(self):
+        helper7 = SessionPeekHelper7
+        with mock.patch.object(helper7, 'peek_json'):
+            data = gzip.compress(
+                b'{"session":{"desired_job_list":[],"jobs":{},"metadata":'
+                b'{"app_blob":null,"flags":[],"running_job_name":null,'
+                b'"title":null},"results":{}},"version":7}')
+            SessionPeekHelper().peek(data)
+            helper7.peek_json.assert_called_once_with(
+                {'session': {'jobs': {},
+                             'metadata': {'title': None,
+                                          'running_job_name': None,
+                                          'app_blob': None,
+                                          'flags': []},
+                             'desired_job_list': [],
+                             'results': {}},
+                 'version': 7})
+
 
 class SessionResumeTests(TestCase):
 
