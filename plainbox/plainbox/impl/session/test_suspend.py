@@ -1010,24 +1010,23 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
         data = self.helper._json_repr(SessionState([]), self.session_dir)
         self.assertEqual(data['version'], 7)
 
-    @mock.patch('datetime.datetime')
-    def test_suspend(self, mock_dt):
-        mock_dt.timestamp.return_value = 5
+    @mock.patch('datetime.datetime', datetime_proxy(datetime.datetime))
+    def test_suspend(self):
         data = self.helper.suspend(SessionState([]), self.session_dir)
         self.assertIsInstance(data, bytes)
         self.assertEqual(gzip.decompress(data), (
             b'{"session":{"desired_job_list":[],"jobs":{},'
             b'"mandatory_job_list":[],"metadata":'
             b'{"app_blob":null,"app_id":null,"flags":[],'
-            b'"running_job_name":null,"timestamp":5,"title":null},'
+            b'"modified_timestamp":"2015-01-01T01:01:01.012345",'
+            b'"running_job_name":null,"title":null},'
             b'"results":{},"selected_test_plans":[]},"version":7}'))
 
-    @mock.patch('datetime.datetime')
-    def test_repr_SessionState_empty_session(self, mock_dt):
+    @mock.patch('datetime.datetime', datetime_proxy(datetime.datetime))
+    def test_repr_SessionState_empty_session(self):
         """
         verify that representation of empty SessionState is okay
         """
-        mock_dt.timestamp.return_value = 20
         data = self.helper._repr_SessionState(
             SessionState([]), self.session_dir)
         self.assertEqual(data, {
@@ -1042,7 +1041,7 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
                 'running_job_name': None,
                 'app_blob': None,
                 'app_id': None,
-                'timestamp': 20
+                'modified_timestamp': '2015-01-01T01:01:01.012345'
             },
         })
 
@@ -1059,7 +1058,7 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
             'running_job_name': None,
             'app_blob': None,
             'app_id': None,
-            'timestamp': None,
+            'modified_timestamp': '1970-01-01T01:00:00',
         })
 
     def test_repr_SessionMetaData_typical_metadata(self):
@@ -1073,7 +1072,7 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
             running_job_name='usb/detect',
             app_blob=b'blob',
             app_id='com.canonical.certification.plainbox',
-            timestamp=100.0,
+            timestamp=datetime.datetime(2015, 1, 1, 1, 1, 1, 1),
         ), self.session_dir)
         self.assertEqual(data, {
             'title': 'USB Testing session',
@@ -1081,11 +1080,11 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
             'running_job_name': 'usb/detect',
             'app_blob': 'YmxvYg==',
             'app_id': 'com.canonical.certification.plainbox',
-            'timestamp': 100.0
+            'modified_timestamp': '2015-01-01T01:01:01.000001',
         })
 
-    @mock.patch('datetime.datetime')
-    def test_repr_SessionState_typical_session(self, mock_dt):
+    @mock.patch('datetime.datetime', datetime_proxy(datetime.datetime))
+    def test_repr_SessionState_typical_session(self):
         """
         verify the representation of a SessionState with some unused jobs
 
@@ -1093,7 +1092,6 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
         should not be mentioned. Their results (empty results) should be
         ignored.
         """
-        mock_dt.timestamp.return_value = 40
         used_job = JobDefinition({
             "plugin": "shell",
             "id": "used",
@@ -1137,7 +1135,7 @@ class SessionSuspendHelper7Tests(SessionSuspendHelper6Tests):
                 'running_job_name': None,
                 'app_blob': None,
                 'app_id': None,
-                'timestamp': 40,
+                'modified_timestamp': '2015-01-01T01:01:01.012345',
             },
         })
 
