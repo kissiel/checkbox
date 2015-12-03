@@ -81,7 +81,7 @@ class SessionMetaData:
         self._running_job_name = running_job_name
         self._app_blob = app_blob
         self._app_id = app_id
-        self._timestamp = timestamp
+        self._modified_timestamp = timestamp
 
     def __repr__(self):
         """Get the representation of the session state meta-data."""
@@ -189,15 +189,13 @@ class SessionMetaData:
         self._app_id = value
 
     @property
-    def timestamp(self):
-        """
-        POSIX time when the session was created.
+    def modified_timestamp(self):
+        """datetime of when the session state was last changed."""
+        return self._modified_timestamp
 
-        Note that this a simple number (POSIX timestamp) to store this value,
-        as it's easier to (de)serialize, and most of the time it will be used
-        for sorting.
-        """
-        return self._timestamp
+    @modified_timestamp.setter
+    def modified_timestamp(self, new_time):
+        self._modified_timestamp = new_time
 
 class SessionDeviceContext:
 
@@ -805,8 +803,7 @@ class SessionState:
         self._run_list = []
         self._resource_map = {}
         self._selected_test_plans = []
-        self._metadata = SessionMetaData(
-            timestamp=datetime.datetime.timestamp(datetime.datetime.utcnow()))
+        self._metadata = SessionMetaData(timestamp=datetime.datetime.utcnow())
         super(SessionState, self).__init__()
 
     def trim_job_list(self, qualifier):

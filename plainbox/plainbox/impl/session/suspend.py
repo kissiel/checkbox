@@ -766,7 +766,7 @@ class SessionSuspendHelper7(SessionSuspendHelper6):
         data = super(SessionSuspendHelper7, self)._repr_SessionMetaData(
             obj, session_dir)
         # and add the timestamp
-        data['timestamp'] = obj.timestamp
+        data['modified_timestamp'] = obj.modified_timestamp.isoformat()
         return data
 
 
