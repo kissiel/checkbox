@@ -24,9 +24,11 @@
 Test definitions for :mod:`plainbox.impl.session.suspend` module
 """
 
+import datetime
 from functools import partial
 from unittest import TestCase
 import gzip
+import padme
 
 from plainbox.abc import IJobResult
 from plainbox.impl.job import JobDefinition
@@ -45,6 +47,11 @@ from plainbox.impl.session.suspend import SessionSuspendHelper7
 from plainbox.impl.testing_utils import make_job
 from plainbox.vendor import mock
 
+class datetime_proxy(padme.proxy):
+    @padme.proxy.direct
+    @staticmethod
+    def utcnow():
+        return datetime.datetime(2015, 1, 1, 1, 1, 1, 12345)
 
 class BaseJobResultTestsTestsMixIn:
     """
