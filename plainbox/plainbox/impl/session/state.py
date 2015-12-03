@@ -71,7 +71,8 @@ class SessionMetaData:
     FLAG_BOOTSTRAPPING = "bootstrapping"
 
     def __init__(self, title=None, flags=None, running_job_name=None,
-                 app_blob=None, app_id=None, timestamp=None):
+                 app_blob=None, app_id=None,
+                 timestamp=datetime.datetime.fromtimestamp(0)):
         """Initialize a new session state meta-data object."""
         if flags is None:
             flags = []
