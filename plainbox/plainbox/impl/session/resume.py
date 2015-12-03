@@ -48,6 +48,7 @@ so two assumptions are made:
 from collections import deque
 import base64
 import binascii
+import datetime
 import gzip
 import json
 import logging
@@ -1161,6 +1162,28 @@ class SessionResumeHelper7(MetaDataHelper7MixIn, SessionResumeHelper6):
     """
     Helper class for implementing session resume feature
     """
+    def _build_SessionState(self, session_repr, early_cb=None):
+        """
+        Reconstruct the session state object.
+
+        This method creates a fresh SessionState instance and restores
+        jobs, results, meta-data and desired job list using helper methods.
+        """
+        session = super()._build_SessionState(session_repr, early_cb)
+        # now 'correct' the modified timestamp to the one saved
+        try:
+            dt = datetime.datetime.strptime(
+                session_repr['metadata']['modified_timestamp'],
+                 "%Y-%m-%dT%H:%M:%S.%f")
+        except ValueError:
+            # there is a 1 in 1000000 chance, that the timestamp was a round
+            # second - we should try parsing that
+            dt = datetime.datetime.strptime(
+                session_repr['metadata']['modified_timestamp'],
+                 "%Y-%m-%dT%H:%M:%S")
+        session.metadata.modified_timestamp = dt
+        return session
+
 
 
 def _validate(obj, **flags):
