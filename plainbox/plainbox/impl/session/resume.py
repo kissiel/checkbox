@@ -445,6 +445,25 @@ class MetaDataHelper3MixIn(MetaDataHelper2MixIn):
             metadata_repr, key='app_id', value_type=str,
             value_none=True)
 
+class MetaDataHelper7MixIn(MetaDataHelper3MixIn):
+
+    """Mix-in class for working with v7 meta-data."""
+
+    @classmethod
+    def _restore_SessionState_metadata(cls, metadata, session_repr):
+        """
+        Reconstruct the session state meta-data.
+
+        Extract meta-data information from the representation of the session
+        and set it in the given session object
+        """
+        super()._restore_SessionState_metadata(metadata, session_repr)
+        # Get the representation of the meta-data
+        metadata_repr = _validate(
+            session_repr, key='metadata', value_type=dict)
+        metadata.modified_timestamp = _validate(
+            metadata_repr, key='modified_timestamp', value_type=str,
+            value_none=False)
 
 class SessionPeekHelper1(MetaDataHelper1MixIn):
 
@@ -555,7 +574,7 @@ class SessionPeekHelper6(SessionPeekHelper5):
     """
 
 
-class SessionPeekHelper7(SessionPeekHelper6):
+class SessionPeekHelper7(MetaDataHelper7MixIn, SessionPeekHelper6):
     """
     Helper class for implementing session peek feature
 
@@ -1138,7 +1157,7 @@ class SessionResumeHelper6(SessionResumeHelper5):
         return session
 
 
-class SessionResumeHelper7(SessionResumeHelper6):
+class SessionResumeHelper7(MetaDataHelper7MixIn, SessionResumeHelper6):
     """
     Helper class for implementing session resume feature
     """

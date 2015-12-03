@@ -28,6 +28,7 @@ from unittest import TestCase
 import base64
 import binascii
 import copy
+import datetime
 import gzip
 import json
 
@@ -49,6 +50,7 @@ from plainbox.impl.session.resume import SessionPeekHelper3
 from plainbox.impl.session.resume import SessionPeekHelper4
 from plainbox.impl.session.resume import SessionPeekHelper5
 from plainbox.impl.session.resume import SessionPeekHelper6
+from plainbox.impl.session.resume import SessionPeekHelper7
 from plainbox.impl.session.resume import SessionResumeError
 from plainbox.impl.session.resume import SessionResumeHelper
 from plainbox.impl.session.resume import SessionResumeHelper1
@@ -57,6 +59,7 @@ from plainbox.impl.session.resume import SessionResumeHelper3
 from plainbox.impl.session.resume import SessionResumeHelper4
 from plainbox.impl.session.resume import SessionResumeHelper5
 from plainbox.impl.session.resume import SessionResumeHelper6
+from plainbox.impl.session.resume import SessionResumeHelper7
 from plainbox.impl.session.state import SessionState
 from plainbox.impl.testing_utils import make_job
 from plainbox.testing_utils.testcases import TestCaseWithParameters
@@ -242,11 +245,36 @@ class SessionResumeHelperTests(TestCase):
                  'version': 6}, None)
 
     def test_resume_dispatch_v7(self):
+        helper7 = SessionResumeHelper7
+        with mock.patch.object(helper7, 'resume_json'):
+            data = gzip.compress(
+                b'{"session":{"desired_job_list":[],"jobs":{},"metadata":'
+                b'{"app_blob":null,"app_id":null,"flags":[],'
+                b'"running_job_name":null,"title":null,'
+                b'"modified_timestamp":"2015-01-01T01:01:01.012345"'
+                b'},"results":{}},"version":7}')
+            SessionResumeHelper([], None, None).resume(data)
+            helper7.resume_json.assert_called_once_with(
+                {'session': {'jobs': {},
+                             'metadata': {'title': None,
+                                          'app_id': None,
+                                          'running_job_name': None,
+                                          'app_blob': None,
+                                          'flags': [],
+                                          'modified_timestamp':
+                                            '2015-01-01T01:01:01.012345',},
+                             'desired_job_list': [],
+                             'results': {}},
+                 'version': 7}, None)
+
+        pass
+
+    def test_resume_dispatch_v8(self):
         data = gzip.compress(
-            b'{"version":7}')
+            b'{"version":8}')
         with self.assertRaises(IncompatibleSessionError) as boom:
             SessionResumeHelper([], None, None).resume(data)
-        self.assertEqual(str(boom.exception), "Unsupported version 7")
+        self.assertEqual(str(boom.exception), "Unsupported version 8")
 
 
 class SessionPeekHelperTests(TestCase):
@@ -1136,7 +1164,8 @@ class DesiredJobListResumeTests(TestCaseWithParameters):
     parameter_names = ('resume_cls',)
     parameter_values = ((SessionResumeHelper1,), (SessionResumeHelper2,),
                         (SessionResumeHelper3,), (SessionResumeHelper4,),
-                        (SessionResumeHelper5,), (SessionResumeHelper6,))
+                        (SessionResumeHelper5,), (SessionResumeHelper6,),
+                        (SessionResumeHelper7,))
 
     def setUp(self):
         # All of the tests need a SessionState object and some jobs to work
@@ -1513,7 +1542,8 @@ class ProcessJobTests(TestCaseWithParameters):
     parameter_names = ('resume_cls',)
     parameter_values = ((SessionResumeHelper1,), (SessionResumeHelper2,),
                         (SessionResumeHelper3,), (SessionResumeHelper4,),
-                        (SessionResumeHelper5,), (SessionResumeHelper6,))
+                        (SessionResumeHelper5,), (SessionResumeHelper6,),
+                        (SessionResumeHelper7,))
 
     def setUp(self):
         self.job_id = 'job'
