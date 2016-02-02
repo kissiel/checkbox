@@ -61,7 +61,7 @@ from checkbox_ng.ui import ShowWelcome
 logger = getLogger("checkbox.ng.commands.newcli")
 
 
-class CliInvocation2(RunInvocation):
+class LauncherInvocationLegacy(RunInvocation):
     """
     Invocation of the 'checkbox cli' command.
 

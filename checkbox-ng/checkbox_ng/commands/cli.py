@@ -33,7 +33,7 @@ from plainbox.impl.commands import PlainBoxCommand
 from plainbox.impl.commands.cmd_checkbox import CheckBoxCommandMixIn
 from plainbox.impl.commands.inv_check_config import CheckConfigInvocation
 
-from checkbox_ng.commands.newcli import CliInvocation2
+from checkbox_ng.commands.newcli import LauncherInvocationLegacy
 
 
 logger = getLogger("checkbox.ng.commands.cli")
@@ -55,7 +55,7 @@ class CliCommand(PlainBoxCommand, CheckBoxCommandMixIn):
         if ns.check_config:
             retval = CheckConfigInvocation(self.config_loader).run()
             return retval
-        return CliInvocation2(
+        return LauncherInvocationLegacy(
             self.provider_loader, self.loader_config, ns, self.settings
         ).run()
 
