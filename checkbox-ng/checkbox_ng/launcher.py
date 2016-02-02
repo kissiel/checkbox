@@ -74,6 +74,17 @@ class LauncherDefinitionLegacy(LauncherDefinition):
         section="welcome",
         help_text=_("Application Title"))
 
+    api_flags = config.Variable(
+        section='launcher',
+        kind=list,
+        default=[],
+        help_text=_('List of feature-flags the application requires'))
+
+    api_version = config.Variable(
+        section='launcher',
+        default='0.99',
+        help_text=_('Version of API the launcher uses'))
+
     text = config.Variable(
         section="welcome",
         help_text=_("Welcome Message"))

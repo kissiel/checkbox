@@ -29,7 +29,7 @@ import logging
 import os
 
 from checkbox_ng.commands import CheckboxCommand
-from checkbox_ng.commands.newcli import LauncherInvocationLegacy
+from checkbox_ng.commands.newcli import get_launcher_invocation
 from checkbox_ng.commands.submit import SubmitCommand
 from checkbox_ng.config import CheckBoxConfig
 from checkbox_ng.launcher import LauncherDefinition
@@ -88,7 +88,7 @@ class LauncherCommand(CheckboxCommand, CheckBoxCommandMixIn, SubmitCommand):
         self.config.read(self.config.Meta.filename_list)
         ns.dry_run = False
         ns.dont_suppress_output = launcher.dont_suppress_output
-        return LauncherInvocationLegacy(
+        return get_launcher_invocation(
             self.provider_loader, lambda: self.config, ns, launcher
         ).run()
 

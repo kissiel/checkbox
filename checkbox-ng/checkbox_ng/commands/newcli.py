@@ -530,3 +530,28 @@ class LauncherInvocationLegacy(RunInvocation):
                 MemoryJobResult({})
         self.run_all_selected_jobs()
         return True
+
+
+class LauncherInvocation1(RunInvocation):
+    def __init__(self, provider_loader, config_loader, ns, launcher,
+                 display=None):
+        pass
+
+    def run(self):
+        pass
+
+
+def get_launcher_invocation(provider_loader, config_loader, ns, launcher,
+                            display=None):
+    """
+    Pick appropriate LauncherInvocation class version depending on config.
+
+    The decision is based on the 'launcher_version' field of the supplied
+    launcher.
+    """
+    launcher_version = launcher.launcher_version
+    cls = {
+        '1': LauncherInvocation1,
+        Unset: LauncherInvocationLegacy,
+    }[launcher_version]
+    return cls(provider_loader, config_loader, ns, launcher, display=display)
