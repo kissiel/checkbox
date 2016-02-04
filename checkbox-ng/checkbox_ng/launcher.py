@@ -149,4 +149,88 @@ class LauncherDefinitionLegacy(LauncherDefinition):
 
 
 class LauncherDefinition1(LauncherDefinition):
-    pass
+    """
+    Definition for launchers version 1.
+
+    As specced in https://goo.gl/qJYtPX
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    launcher_version = config.Variable(
+        section="launcher",
+        help_text=_("Version of launcher to use"))
+
+    app_id = config.Variable(
+        section='launcher',
+        default='checkbox-cli',
+        help_text=_('Identifier of the application'))
+
+    app_version = config.Variable(
+        section='launcher',
+        help_text=_('Version of the application'))
+
+    api_flags = config.Variable(
+        section='launcher',
+        help_text=_('List of feature-flags the application requires'))
+
+    api_version = config.Variable(
+        section='launcher',
+        default='0.99',
+        help_text=_('Version of API the launcher uses'))
+
+    providers = config.Variable(
+        section='providers',
+        name='use',
+        default='*',
+        help_text=_('Which providers to load; glob patterns can be used'))
+
+    test_plan_filters = config.Variable(
+        section='test plan',
+        name='filter',
+        help_text=_('Constrain interactive choice to test plans matching this'
+                    'glob'))
+
+    test_plan_default_selection = config.Variable(
+        section='test plan',
+        name='unit',
+        help_text=_('Select this test plan by default.'))
+
+
+    test_plan_forced = config.Variable(
+        section='test plan',
+        name='forced',
+        kind=bool,
+        default=False,
+        help_text=_("Don't allow the user to change test plan."))
+
+    test_selection_forced = config.Variable(
+        section='test selection',
+        name='forced',
+        kind=bool,
+        default=False,
+        help_text=_("Don't allow the user to alter test selection."))
+
+    ui_type = config.Variable(
+        section='ui',
+        name='type',
+        default='interactive',
+        help_text=_('Type of stock user interface to use.'))
+
+    restart_strategy = config.Variable(
+        section='restart',
+        name='strategy',
+        help_text=_('Use alternative restart strategy'))
+
+    reports = config.ParametricSection(
+        name='report',
+        help_text=_('Report declaration'))
+
+    exporters = config.ParametricSection(
+        name='exporter',
+        help_text=_('Exporter declaration'))
+
+    transports = config.ParametricSection(
+        name='transport',
+        help_text=_('Transport declaration'))
