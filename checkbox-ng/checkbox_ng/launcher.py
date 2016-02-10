@@ -173,6 +173,8 @@ class LauncherDefinition1(LauncherDefinition):
 
     api_flags = config.Variable(
         section='launcher',
+        kind=list,
+        default=[],
         help_text=_('List of feature-flags the application requires'))
 
     api_version = config.Variable(
@@ -183,12 +185,15 @@ class LauncherDefinition1(LauncherDefinition):
     providers = config.Variable(
         section='providers',
         name='use',
-        default='*',
+        kind=list,
+        default=['*'],
         help_text=_('Which providers to load; glob patterns can be used'))
 
     test_plan_filters = config.Variable(
         section='test plan',
         name='filter',
+        default=['*'],
+        kind=list,
         help_text=_('Constrain interactive choice to test plans matching this'
                     'glob'))
 
