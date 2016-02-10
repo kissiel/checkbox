@@ -116,7 +116,7 @@ class Variable(INameTracking):
     Variable that can be used in a configuration systems
     """
 
-    _KIND_CHOICE = (bool, int, float, str)
+    _KIND_CHOICE = (bool, int, float, str, list)
 
     def __init__(self, name=None, *, section='DEFAULT', kind=str,
                  default=Unset, validator_list=None, help_text=None):
@@ -393,6 +393,7 @@ class PlainBoxConfigParser(configparser.ConfigParser):
 
     - option names are not lower-cased
     - write() has deterministic ordering (sorted by name)
+    - parsing list capability
     """
 
     def optionxform(self, option):
@@ -422,6 +423,16 @@ class PlainBoxConfigParser(configparser.ConfigParser):
             self._write_section(
                 fp, section, sorted(self._sections[section].items()), d)
 
+    def getlist(self, section, option, *, raw=False, vars=None,
+                   fallback=configparser._UNSET, **kwargs):
+        return self._get(section, self._convert_to_list, option,  **kwargs)
+
+    def _convert_to_list(self, value):
+        """Return list extracted from value.
+
+        The ``value`` is split using ',' and ' ' as delimiters.
+        """
+        return value.replace(',', ' ').split()
 
 class Config(metaclass=ConfigMeta):
     """
@@ -615,7 +626,8 @@ class Config(metaclass=ConfigMeta):
             str: parser.get,
             bool: parser.getboolean,
             int: parser.getint,
-            float: parser.getfloat
+            float: parser.getfloat,
+            list: parser.getlist
         }
         # Load all variables that we know about
         for variable in self.Meta.variable_list:
@@ -740,6 +752,7 @@ def KindValidator(variable, new_value):
             int: _("expected an integer"),
             float: _("expected a floating point number"),
             str: _("expected a string"),
+            list: _("expected a list of strings")
         }[variable.kind]
 
 

@@ -98,8 +98,10 @@ class VariableTests(TestCase):
         self.assertIs(v4.kind, str)
         v5 = Variable()
         self.assertIs(v5.kind, str)
+        v6 = Variable(kind=list)
+        self.assertIs(v6.kind, list)
         with self.assertRaises(ValueError):
-            Variable(kind=list)
+            Variable(kind=dict)
 
     def test_validator_list__default(self):
         """
