@@ -468,7 +468,7 @@ def generate_manifest(with_autopilot=False):
 def build_click():
     print('Building click package')
     base_path = os.path.normpath(os.path.join(os.getcwd(), '..'))
-    click_source_path = os.path.join(base_path, 'checkbox-touch')
+    click_source_path = os.path.join(base_path, 'converged')
     out = subprocess.check_output(
         ['click', 'build', click_source_path],
         cwd=os.path.join(base_path, 'build-cbt'))
